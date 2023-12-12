@@ -3,6 +3,7 @@
 import cv2
 import itertools
 import numpy as np
+import os
 import plotly.express as px
 import plotly.graph_objects as go
 
@@ -96,10 +97,20 @@ def save_images_to_video(images, video_filename):
     writer.release()
 
 def point_source_over_time_experiment():
-    wavelength = 0.1
-    center = np.array([0.2, -0.2])
-    wave = PlanarWave(wavelength, center=center)
-    
+    # wavelengths = [0.3, 0.3]
+    # centers = np.array([
+    #     [0.4, -0.2],
+    #     [-0.5, -0.1],
+    # ])
+    wavelengths = [0.3]
+    centers = np.array([
+        [0.2, -0.2],
+    ])
+    waves = [
+        PlanarWave(wavelength, center=center)
+        for wavelength, center in zip(wavelengths, centers)
+    ]
+
     grid_size = 200 # 10, 200
     x = np.linspace(-1, 1, grid_size)
     y = np.linspace(-1, 1, grid_size)
@@ -108,15 +119,20 @@ def point_source_over_time_experiment():
     N = 200
     t = np.linspace(0, 2, N)
 
-    amplitudes = np.array([
-        wave.wave_at_point(p)(t) for p in points
+    amplitudes = np.stack([
+        np.array([
+            wave.wave_at_point(p)(t) for p in points
+        ]) for wave in waves
     ])
-    images = amplitudes.reshape([len(x), len(y), -1]) ** 2
+    amplitudes[np.isnan(amplitudes)] = 0
+    combined_amplitudes = np.sum(amplitudes, axis=0)
+    combined_amplitudes = combined_amplitudes
+
+    images = combined_amplitudes.reshape([len(x), len(y), -1]) ** 2
     images = images.transpose([2, 0, 1])
-    images[np.isnan(images)] = 0
 
     # Create a video writer
-    video_filename = r"C:\Users\chris\OneDrive\Desktop\waves.mp4"
+    video_filename = os.path.expanduser(r"~\OneDrive\Desktop\waves.mp4")
     save_images_to_video(images, video_filename)
 
 if __name__ == "__main__":
