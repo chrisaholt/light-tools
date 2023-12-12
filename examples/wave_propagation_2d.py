@@ -29,10 +29,11 @@ class PlanarWave(Wave2D):
     """
     Describes a 2D wave traveling along the +x-axis.
     """
-    def __init__(self, wavelength, phase=0):
+    def __init__(self, wavelength, phase=0, center=np.array([0, 0])):
         self._phase = phase
         self._wavelength = wavelength
         self._inverse_wavelength = 1 / wavelength
+        self._center = center
     
     def field_at_time(self, t):
         """
@@ -42,7 +43,7 @@ class PlanarWave(Wave2D):
         return np.cos(2 * np.pi * self._inverse_wavelength * t + self._phase)
 
     def wave_at_point(self, p):
-        start = np.array([0, 0])
+        start = self._center
         distance = np.linalg.norm(p - start)
         optical_distance_to_point = distance
 
@@ -52,8 +53,9 @@ class PlanarWave(Wave2D):
         interface_y = 0.25
         index_of_refraction = 1.5
         if p[1] >= interface_y:
-            p_intersection_lambda = (interface_y - start[1]) / p[1]
-            p_intersection = start + p_intersection_lambda * p
+            ray_direction = (p - start) / distance
+            p_intersection_lambda = (interface_y - start[1]) / ray_direction[1]
+            p_intersection = start + p_intersection_lambda * ray_direction
             optical_distance_to_point = \
                 np.linalg.norm(p_intersection - start) + \
                 np.linalg.norm(p - p_intersection) * index_of_refraction
@@ -62,6 +64,7 @@ class PlanarWave(Wave2D):
             return \
                 indicator_func(t, optical_distance_to_point) * \
                 self.field_at_time(t-optical_distance_to_point)
+        
         return wave_func
 
 def save_images_to_video(images, video_filename):
@@ -85,7 +88,8 @@ def save_images_to_video(images, video_filename):
 
 def point_source_over_time_experiment():
     wavelength = 0.3 #700e-9
-    wave = PlanarWave(wavelength)
+    center = np.array([0.2, -0.2])
+    wave = PlanarWave(wavelength, center=center)
     
     grid_size = 200 # 10, 200
     x = np.linspace(-1, 1, grid_size)
