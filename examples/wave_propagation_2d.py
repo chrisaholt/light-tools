@@ -18,13 +18,6 @@ def indicator_func(
     indicator_array[t < thresh] = np.nan
     return indicator_array
 
-class Wave2D:
-    """
-    Describes a 2D wave.
-    """
-    def __init__(self):
-        pass
-
 def compute_optical_path_length(start, end):
     """
     Computes the optical path length between two points.
@@ -46,7 +39,14 @@ def compute_optical_path_length(start, end):
             np.linalg.norm(intersection - start) + \
             np.linalg.norm(end - intersection) * index_of_refraction
         
-    return optical_distance_to_point    
+    return optical_distance_to_point
+
+class Wave2D:
+    """
+    Describes a 2D wave.
+    """
+    def __init__(self):
+        pass
 
 class PlanarWave(Wave2D):
     """
@@ -96,7 +96,7 @@ def save_images_to_video(images, video_filename):
     writer.release()
 
 def point_source_over_time_experiment():
-    wavelength = 0.3 #700e-9
+    wavelength = 0.1
     center = np.array([0.2, -0.2])
     wave = PlanarWave(wavelength, center=center)
     
@@ -105,7 +105,7 @@ def point_source_over_time_experiment():
     y = np.linspace(-1, 1, grid_size)
     points = np.array(list(itertools.product(x, y)))
 
-    N = 100 # 100
+    N = 200
     t = np.linspace(0, 2, N)
 
     amplitudes = np.array([
