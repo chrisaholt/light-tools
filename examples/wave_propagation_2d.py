@@ -25,6 +25,29 @@ class Wave2D:
     def __init__(self):
         pass
 
+def compute_optical_path_length(start, end):
+    """
+    Computes the optical path length between two points.
+    For now, this function assumes a fixed scene geometry.
+    """
+    ray_direction = end - start
+    optical_distance_to_point = np.linalg.norm(ray_direction)
+    ray_direction = ray_direction / np.linalg.norm(ray_direction)
+
+    # Define an (arbitrary) optical surface at y=interface_y,
+    # with specificied index_of_refraction. Then compute the 
+    # optical path length including that interface.
+    interface_y = 0.25
+    index_of_refraction = 1.5
+    if end[1] >= interface_y:
+        intersection_lambda = (interface_y - start[1]) / ray_direction[1]
+        intersection = start + intersection_lambda * ray_direction
+        optical_distance_to_point = \
+            np.linalg.norm(intersection - start) + \
+            np.linalg.norm(end - intersection) * index_of_refraction
+        
+    return optical_distance_to_point    
+
 class PlanarWave(Wave2D):
     """
     Describes a 2D wave traveling along the +x-axis.
@@ -44,21 +67,7 @@ class PlanarWave(Wave2D):
 
     def wave_at_point(self, p):
         start = self._center
-        distance = np.linalg.norm(p - start)
-        optical_distance_to_point = distance
-
-        # Define an (arbitrary) optical surface at y=interface_y,
-        # with specificied index_of_refraction. Then compute the 
-        # optical path length including that interface.
-        interface_y = 0.25
-        index_of_refraction = 1.5
-        if p[1] >= interface_y:
-            ray_direction = (p - start) / distance
-            p_intersection_lambda = (interface_y - start[1]) / ray_direction[1]
-            p_intersection = start + p_intersection_lambda * ray_direction
-            optical_distance_to_point = \
-                np.linalg.norm(p_intersection - start) + \
-                np.linalg.norm(p - p_intersection) * index_of_refraction
+        optical_distance_to_point = compute_optical_path_length(start, p)
 
         def wave_func(t):
             return \
