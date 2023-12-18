@@ -72,6 +72,83 @@ class VerticalPlane(Surface):
         intersection = ray_start + np.tile(intersection_lambda, (num_points, 1)) * ray_dir
         return intersection, is_valid
 
+class SphericalSurface(Surface):
+    """
+    Represents a spherical surface.
+    """
+    def __init__(self,
+        center: np.array,
+        radius: float,
+        is_convex: bool,
+        distance_from_apex: float,
+    ):
+        self._center = center
+        self._radius = radius
+        self._is_convex = is_convex
+
+        self._cos_max_angle_from_apex = np.clip((radius - distance_from_apex) / radius, -1.0, 1.0)
+
+    def intersect(self,
+        ray_start: np.array,
+        ray_dir: np.array,
+    ):
+        # Enforce shape of (num_points, point_dimension)
+        assert ray_start.shape == ray_dir.shape
+        if len(ray_start.shape) == 1:
+            ray_start = expand_shape(ray_start)
+            ray_dir = expand_shape(ray_dir)
+
+        # Compute intersections
+        # Solve this equation for lambda:
+        # |start + lambda*dir - center|^2 = radius^2
+        num_points, point_dimension = ray_start.shape
+
+        # From ChatGPT on 12/16/23
+        center = self._center
+        radius = self._radius
+        # Adjust rays relative to the center of the sphere
+        oc = ray_start - center
+
+        # Coefficients of the quadratic equation
+        a = np.sum(ray_dir**2, axis=1)
+        b = 2 * np.sum(oc * ray_dir, axis=1)
+        c = np.sum(oc**2, axis=1) - radius**2
+
+        # Discriminant
+        discriminant = b**2 - 4 * a * c
+
+        # Find intersections where the discriminant is non-negative
+        hits = discriminant >= 0
+
+        # Compute the two solutions of the quadratic equation
+        t0 = (-b - np.sqrt(discriminant)) / (2 * a)
+        t1 = (-b + np.sqrt(discriminant)) / (2 * a)
+
+        # Select the smallest positive t
+        # t = np.where((t0 < t1) & (t0 > 0), t0, t1)
+        if self._is_convex:
+            t = t0
+        else:
+            t = t1
+
+        # If there's no positive t, there's no intersection
+        is_valid = hits & (t > 0)
+        t = np.where(is_valid, t, np.nan)
+
+        # Calculate intersection points
+        # intersection_points = ray_start + t[:, np.newaxis] * ray_dir
+        intersection_points = ray_start + np.tile(t, (num_points, 1)) * ray_dir
+
+        # Check how far they points are from the apex (in angle)
+        vectors_from_center = intersection_points - self._center
+        vectors_from_center = vectors_from_center / np.linalg.norm(vectors_from_center, axis=-1, keepdims=True)
+        cos_angle_from_center = vectors_from_center[:, 1]
+        if self._is_convex:
+            cos_angle_from_center = -cos_angle_from_center
+        is_valid = is_valid & (cos_angle_from_center >= self._cos_max_angle_from_apex)
+
+        return intersection_points, is_valid
+
 class OpticalVolume:
     """
     Describes a volume of space with refractive properties.
@@ -126,6 +203,12 @@ class OpticalVolume:
             ray_dirs,
         )
 
+        # Intersections with the exit surface of rays from entry to exit.
+        intersections_exit_from_entry, is_entry_from_exit_valid = self._exit_surface.intersect(
+            intersections_light_to_entry,
+            ray_dirs,
+        )
+
         # Compute distances within the surface for three different cases.
         #   1) Point is before the surface
         #   2) Point is within the surface
@@ -144,7 +227,7 @@ class OpticalVolume:
         # Point is after surface (3)
         is_after_surface = is_entry_valid and ~is_exit_valid
         distances_exit_to_entry = np.linalg.norm(
-            intersections_point_to_exit - intersections_light_to_entry, axis=-1
+            intersections_exit_from_entry - intersections_light_to_entry, axis=-1
         )
         distance_within_surface[is_after_surface] = distances_exit_to_entry[is_after_surface]
 
@@ -158,8 +241,20 @@ def compute_optical_path_length(start, end):
     Computes the optical path length between two points.
     For now, this function assumes a fixed scene geometry.
     """
-    entry_surface = VerticalPlane(0.25)
-    exit_surface = VerticalPlane(0.5)
+    entry_surface = SphericalSurface(
+        center=np.array([0, 1.0]),
+        radius=0.75,
+        is_convex=True,
+        distance_from_apex=0.3,
+    )
+    exit_surface = SphericalSurface(
+        center=np.array([0, 0]),
+        radius=0.75,
+        is_convex=False,
+        distance_from_apex=0.3,
+    )
+    # entry_surface = VerticalPlane(0.25)
+    # exit_surface = VerticalPlane(0.75)
     index_of_refraction = 1.5
     optical_volume = OpticalVolume(
         entry_surface,
@@ -236,6 +331,7 @@ def point_source_over_time_experiment():
     # ])
     wavelengths = [0.3]
     centers = np.array([
+        # [0.0, 0.0],
         [0.2, -0.2],
     ])
     waves = [
@@ -248,7 +344,7 @@ def point_source_over_time_experiment():
     y = np.linspace(-1, 1, grid_size)
     points = np.array(list(itertools.product(x, y)))
 
-    N = 200
+    N = 200 # 200
     t = np.linspace(0, 2, N)
 
     amplitudes = np.stack([
