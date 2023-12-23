@@ -281,7 +281,7 @@ class Wave2D:
     def __init__(self):
         pass
 
-class PlanarWave(Wave2D):
+class PointSourceWave(Wave2D):
     """
     Describes a 2D wave traveling along the +x-axis.
     """
@@ -341,7 +341,7 @@ def point_source_over_time_experiment():
         [0.0, -0.2],
     ])
     waves = [
-        PlanarWave(wavelength, center=center)
+        PointSourceWave(wavelength, center=center)
         for wavelength, center in zip(wavelengths, centers)
     ]
 
