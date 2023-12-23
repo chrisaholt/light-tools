@@ -22,6 +22,11 @@ def indicator_func(
     indicator_array[t < thresh] = np.nan
     return indicator_array
 
+def scale_func(
+    optical_distance_to_point: np.array,
+):
+    return 1 / (1 + optical_distance_to_point)
+
 class Surface:
     """
     Describes a surface in space.
@@ -300,6 +305,7 @@ class PlanarWave(Wave2D):
         def wave_func(t):
             return \
                 indicator_func(t, optical_distance_to_point) * \
+                scale_func(optical_distance_to_point) * \
                 self.field_at_time(t-optical_distance_to_point)
 
         return wave_func
@@ -332,7 +338,7 @@ def point_source_over_time_experiment():
     wavelengths = [0.3]
     centers = np.array([
         # [0.0, 0.0],
-        [0.2, -0.2],
+        [0.0, -0.2],
     ])
     waves = [
         PlanarWave(wavelength, center=center)
