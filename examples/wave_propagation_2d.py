@@ -49,7 +49,25 @@ class Surface:
             intersection (np.array (num_points, point_dimension))
             is_valid (np.array[bool] (num_points,)): True iff the rays intersect along the positive ray direction.
         """
-        pass
+        raise NotImplementedError()
+
+    def normal_at(self,
+        point: np.array,
+    ):
+        """
+        Computes the unit vector normal to the surface at the given point.
+        If the point is not on the surface, then the returned value will be
+        the normal at the closest point on the surface.
+        """
+        raise NotImplementedError()
+
+    def closest_point(self,
+        point: np.array,
+    ):
+        """
+        Computes the closest point on the surface to the given point.
+        """
+        raise NotImplementedError()
 
 class VerticalPlane(Surface):
     """
@@ -76,6 +94,23 @@ class VerticalPlane(Surface):
         is_valid = intersection_lambda >= 0
         intersection = ray_start + np.tile(intersection_lambda, (num_points, 1)) * ray_dir
         return intersection, is_valid
+
+    def normal_at(self,
+        point: np.array,
+    ):
+        normals = np.zeros(point.shape)
+        normals[:, 1] = 1
+        return normals
+
+    def closest_point(self,
+        point: np.array,
+    ):
+        if len(point.shape) == 1:
+            point = expand_shape(point)
+
+        closest_point = np.copy(point)
+        closest_point[:, 1] = self._constant
+        return closest_point
 
 class SphericalSurface(Surface):
     """
@@ -186,8 +221,11 @@ class OpticalVolume:
             point = expand_shape(point)
 
         num_points, point_dim = point.shape
-        assert light_source.shape == (point_dim,)
-        light_source_expanded = np.tile(light_source, (num_points, 1))
+        if light_source.shape != point.shape:
+            assert light_source.shape == (point_dim,), f"light_source.shape = {light_source.shape}, point.shape = {point.shape}"
+            light_source_expanded = np.tile(light_source, (num_points, 1))
+        else:
+            light_source_expanded = light_source
 
         # Ray directions from light source to the points.
         ray_dirs = point - light_source_expanded
@@ -310,6 +348,41 @@ class PointSourceWave(Wave2D):
 
         return wave_func
 
+class PlaneWave(Wave2D):
+    """
+    Describes a 2D plane wave.
+    """
+    def __init__(self,
+        wavelength,
+        emitter=VerticalPlane(0),
+        phase=0,
+        # wavelength: float,
+        # emitter: VerticalPlane = VerticalPlane(0),
+        # phase: float = 0,
+    ):
+        self._emitter = emitter
+        self._phase = phase
+        self._wavelength = wavelength
+        self._inverse_wavelength = 1 / wavelength
+
+    def field_at_time(self, t):
+        """
+        Amplitude of the wave field at normalized time t.
+        """
+        return np.cos(2 * np.pi * self._inverse_wavelength * t + self._phase)
+
+    def wave_at_point(self, p):
+        start = self._emitter.closest_point(p)
+        optical_distance_to_point = compute_optical_path_length(start, p)
+
+        def wave_func(t):
+            return \
+                indicator_func(t, optical_distance_to_point) * \
+                scale_func(optical_distance_to_point) * \
+                self.field_at_time(t-optical_distance_to_point)
+
+        return wave_func
+
 def save_images_to_video(images, video_filename):
     frame_rate = 10
     _, height, width = images.shape
@@ -340,9 +413,16 @@ def point_source_over_time_experiment():
         # [0.0, 0.0],
         [0.0, -0.2],
     ])
+    plane_wave_emitters = [
+        VerticalPlane(-0.5),
+    ]
+    # waves = [
+    #     PointSourceWave(wavelength, center=center)
+    #     for wavelength, center in zip(wavelengths, centers)
+    # ]
     waves = [
-        PointSourceWave(wavelength, center=center)
-        for wavelength, center in zip(wavelengths, centers)
+        PlaneWave(wavelength, emitter=emitter)
+        for wavelength, emitter in zip(wavelengths, plane_wave_emitters)
     ]
 
     grid_size = 200 # 10, 200
