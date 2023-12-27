@@ -112,6 +112,13 @@ class VerticalPlane(Surface):
         closest_point[:, 1] = self._constant
         return closest_point
 
+    def is_behind(self,
+        point: np.array,
+    ):
+        if len(point.shape) == 1:
+            point = expand_shape(point)
+        return point[:, 1] < self._constant
+
 class SphericalSurface(Surface):
     """
     Represents a spherical surface.
@@ -353,12 +360,9 @@ class PlaneWave(Wave2D):
     Describes a 2D plane wave.
     """
     def __init__(self,
-        wavelength,
-        emitter=VerticalPlane(0),
-        phase=0,
-        # wavelength: float,
-        # emitter: VerticalPlane = VerticalPlane(0),
-        # phase: float = 0,
+        wavelength: float,
+        emitter: VerticalPlane = VerticalPlane(0),
+        phase: float = 0,
     ):
         self._emitter = emitter
         self._phase = phase
@@ -374,6 +378,7 @@ class PlaneWave(Wave2D):
     def wave_at_point(self, p):
         start = self._emitter.closest_point(p)
         optical_distance_to_point = compute_optical_path_length(start, p)
+        optical_distance_to_point[self._emitter.is_behind(p)] = np.nan
 
         def wave_func(t):
             return \
