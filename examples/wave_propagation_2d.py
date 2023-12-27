@@ -14,6 +14,7 @@ from geometry.spherical_surface import SphericalSurface
 from geometry.surface import Surface
 from geometry.vertical_plane import VerticalPlane
 from geometry.utils import expand_shape
+from waves.wave import Wave
 
 def indicator_func(
         t: np.array,
@@ -153,29 +154,13 @@ def compute_optical_path_length(start, end):
     optical_distance_to_point = distance + additional_optical_distance
     return optical_distance_to_point
 
-class Wave2D:
-    """
-    Describes a 2D wave.
-    """
-    def __init__(self):
-        pass
-
-class PointSourceWave(Wave2D):
+class PointSourceWave(Wave):
     """
     Describes a 2D wave traveling along the +x-axis.
     """
     def __init__(self, wavelength, phase=0, center=np.array([0, 0])):
-        self._phase = phase
-        self._wavelength = wavelength
-        self._inverse_wavelength = 1 / wavelength
+        super().__init__(wavelength, phase)
         self._center = center
-
-    def field_at_time(self, t):
-        """
-        Amplitude of the wave field at normalized time t.
-        Normalized time means time assuming speed of light c in a vacuum is 1.
-        """
-        return np.cos(2 * np.pi * self._inverse_wavelength * t + self._phase)
 
     def wave_at_point(self, p):
         start = self._center
@@ -189,7 +174,7 @@ class PointSourceWave(Wave2D):
 
         return wave_func
 
-class PlaneWave(Wave2D):
+class PlaneWave(Wave):
     """
     Describes a 2D plane wave.
     """
@@ -198,16 +183,8 @@ class PlaneWave(Wave2D):
         emitter: VerticalPlane = VerticalPlane(0),
         phase: float = 0,
     ):
+        super().__init__(wavelength, phase)
         self._emitter = emitter
-        self._phase = phase
-        self._wavelength = wavelength
-        self._inverse_wavelength = 1 / wavelength
-
-    def field_at_time(self, t):
-        """
-        Amplitude of the wave field at normalized time t.
-        """
-        return np.cos(2 * np.pi * self._inverse_wavelength * t + self._phase)
 
     def wave_at_point(self, p):
         start = self._emitter.closest_point(p)
