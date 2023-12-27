@@ -14,22 +14,8 @@ from geometry.spherical_surface import SphericalSurface
 from geometry.surface import Surface
 from geometry.vertical_plane import VerticalPlane
 from geometry.utils import expand_shape
-from waves.wave import Wave
-
-def indicator_func(
-        t: np.array,
-        thresh: np.array):
-    """
-    Returns nan if t < thresh and 1 if t >= thresh.
-    """
-    indicator_array = np.ones(t.shape )
-    indicator_array[t < thresh] = np.nan
-    return indicator_array
-
-def scale_func(
-    optical_distance_to_point: np.array,
-):
-    return 1 / (1 + optical_distance_to_point)
+from waves.plane_wave import PlaneWave
+from waves.point_source_wave import PointSourceWave
 
 class OpticalVolume:
     """
@@ -154,51 +140,6 @@ def compute_optical_path_length(start, end):
     optical_distance_to_point = distance + additional_optical_distance
     return optical_distance_to_point
 
-class PointSourceWave(Wave):
-    """
-    Describes a 2D wave traveling along the +x-axis.
-    """
-    def __init__(self, wavelength, phase=0, center=np.array([0, 0])):
-        super().__init__(wavelength, phase)
-        self._center = center
-
-    def wave_at_point(self, p):
-        start = self._center
-        optical_distance_to_point = compute_optical_path_length(start, p)
-
-        def wave_func(t):
-            return \
-                indicator_func(t, optical_distance_to_point) * \
-                scale_func(optical_distance_to_point) * \
-                self.field_at_time(t-optical_distance_to_point)
-
-        return wave_func
-
-class PlaneWave(Wave):
-    """
-    Describes a 2D plane wave.
-    """
-    def __init__(self,
-        wavelength: float,
-        emitter: VerticalPlane = VerticalPlane(0),
-        phase: float = 0,
-    ):
-        super().__init__(wavelength, phase)
-        self._emitter = emitter
-
-    def wave_at_point(self, p):
-        start = self._emitter.closest_point(p)
-        optical_distance_to_point = compute_optical_path_length(start, p)
-        optical_distance_to_point[self._emitter.is_behind(p)] = np.nan
-
-        def wave_func(t):
-            return \
-                indicator_func(t, optical_distance_to_point) * \
-                scale_func(optical_distance_to_point) * \
-                self.field_at_time(t-optical_distance_to_point)
-
-        return wave_func
-
 def save_images_to_video(images, video_filename):
     frame_rate = 10
     _, height, width = images.shape
@@ -252,7 +193,7 @@ def point_source_over_time_experiment():
 
     amplitudes = np.stack([
         np.array([
-            wave.wave_at_point(p)(t) for p in points
+            wave.wave_at_point(p, compute_optical_path_length)(t) for p in points
         ]) for wave in waves
     ])
     amplitudes[np.isnan(amplitudes)] = 0
