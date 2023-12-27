@@ -292,14 +292,14 @@ def compute_optical_path_length(start, end):
     For now, this function assumes a fixed scene geometry.
     """
     entry_surface = SphericalSurface(
-        center=np.array([0, 1.0]),
+        center=np.array([0, 0.25]),
         radius=0.75,
         is_convex=True,
         distance_from_apex=0.3,
     )
     exit_surface = SphericalSurface(
-        center=np.array([0, 0]),
-        radius=0.75,
+        center=np.array([0, -0.75]),
+        radius=1.0,
         is_convex=False,
         distance_from_apex=0.3,
     )
@@ -419,7 +419,7 @@ def point_source_over_time_experiment():
         [0.0, -0.2],
     ])
     plane_wave_emitters = [
-        VerticalPlane(-0.5),
+        VerticalPlane(-1.0),
     ]
     # waves = [
     #     PointSourceWave(wavelength, center=center)
@@ -435,8 +435,9 @@ def point_source_over_time_experiment():
     y = np.linspace(-1, 1, grid_size)
     points = np.array(list(itertools.product(x, y)))
 
-    N = 200 # 200
-    t = np.linspace(0, 2, N)
+    time_resolution = 200 # 200
+    total_time = 3 # 2
+    t = np.linspace(0, total_time, time_resolution)
 
     amplitudes = np.stack([
         np.array([
