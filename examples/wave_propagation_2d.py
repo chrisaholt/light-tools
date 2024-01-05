@@ -204,7 +204,7 @@ def point_source_over_time_experiment():
     images = images.transpose([2, 0, 1])
 
     # Create a video writer
-    video_filename = os.path.expanduser(r"~/Desktop/waves.mp4")
+    video_filename = os.path.expanduser(r"~/OneDrive/Desktop/waves.mp4")
     save_images_to_video(images, video_filename)
 
 if __name__ == "__main__":
