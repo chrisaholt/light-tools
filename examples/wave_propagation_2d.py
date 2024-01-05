@@ -103,7 +103,9 @@ class OpticalVolume:
         distance_within_surface[is_after_surface] = distances_exit_to_entry[is_after_surface]
 
         # Adjust for index of refraction.
-        additional_optical_distance = distance_within_surface * (self._index_of_refraction - 1)
+        # Ignore distances of length 0 to allow for infinite index of refraction.
+        additional_optical_distance = distance_within_surface
+        additional_optical_distance[additional_optical_distance > 0] *= (self._index_of_refraction - 1)
 
         return additional_optical_distance
 
@@ -127,14 +129,23 @@ def compute_optical_path_length(start, end):
     # entry_surface = VerticalPlane(0.25)
     # exit_surface = VerticalPlane(0.75)
     index_of_refraction = 1.5
-    optical_volume = OpticalVolume(
+    optical_volume_1 = OpticalVolume(
         entry_surface,
         exit_surface,
-        index_of_refraction,
+        index_of_refraction=np.inf,
+    )
+
+    optical_volume_2 = OpticalVolume(
+        VerticalPlane(-0.9),
+        VerticalPlane(-0.75),
+        index_of_refraction=3.0,
     )
 
     distance = np.linalg.norm(end - start)
-    additional_optical_distance = optical_volume.additional_optical_distance_to_point(
+    additional_optical_distance = optical_volume_1.additional_optical_distance_to_point(
+        start, end
+    )
+    additional_optical_distance += optical_volume_2.additional_optical_distance_to_point(
         start, end
     )
     optical_distance_to_point = distance + additional_optical_distance
