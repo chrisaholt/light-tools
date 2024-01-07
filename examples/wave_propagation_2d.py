@@ -110,11 +110,7 @@ class OpticalVolume:
 
         return additional_optical_distance
 
-def compute_optical_path_length(start, end):
-    """
-    Computes the optical path length between two points.
-    For now, this function assumes a fixed scene geometry.
-    """
+def create_lens():
     entry_surface = SphericalSurface(
         center=np.array([0, 0.25]),
         radius=0.75,
@@ -127,16 +123,15 @@ def compute_optical_path_length(start, end):
         is_convex=False,
         distance_from_apex=0.3,
     )
-    # entry_surface = VerticalPlane(0.25)
-    # exit_surface = VerticalPlane(0.75)
     index_of_refraction = 1.5
-    optical_volume = OpticalVolume(
+    lens = OpticalVolume(
         entry_surface,
         exit_surface,
         index_of_refraction=index_of_refraction,
     )
+    return lens
 
-    # Light blockers
+def create_light_blockers():
     blocker_index_of_refraction = np.inf
     blocker_location = -0.2
     blocker_width = 0.1
@@ -164,17 +159,26 @@ def compute_optical_path_length(start, end):
         ),
         index_of_refraction=blocker_index_of_refraction,
     )
+    return (blocker_upper, blocker_lower)
+
+def compute_optical_path_length(start, end):
+    """
+    Computes the optical path length between two points.
+    For now, this function assumes a fixed scene geometry.
+    """
+
+    lens = create_lens()
+    light_blockers = create_light_blockers()
 
     distance = np.linalg.norm(end - start)
-    additional_optical_distance = optical_volume.additional_optical_distance_to_point(
+    additional_optical_distance = lens.additional_optical_distance_to_point(
         start, end
     )
-    additional_optical_distance += blocker_upper.additional_optical_distance_to_point(
-        start, end
-    )
-    additional_optical_distance += blocker_lower.additional_optical_distance_to_point(
-        start, end
-    )
+    for blocker in light_blockers:
+        additional_optical_distance += blocker.additional_optical_distance_to_point(
+            start, end
+        )
+
     optical_distance_to_point = distance + additional_optical_distance
     return optical_distance_to_point
 
