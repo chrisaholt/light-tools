@@ -13,6 +13,7 @@ sys.path.append("..")
 from geometry.spherical_surface import SphericalSurface
 from geometry.surface import Surface
 from geometry.vertical_plane import VerticalPlane
+from geometry.vertical_plane_with_limits import VerticalPlaneWithLimits
 from geometry.utils import expand_shape
 from waves.plane_wave import PlaneWave
 from waves.point_source_wave import PointSourceWave
@@ -136,8 +137,8 @@ def compute_optical_path_length(start, end):
     )
 
     optical_volume_2 = OpticalVolume(
-        VerticalPlane(-0.9),
-        VerticalPlane(-0.75),
+        VerticalPlaneWithLimits(-0.9, bounds=(-0.5, 0.5)),
+        VerticalPlaneWithLimits(-0.75, bounds=(-0.5, 0.5)),
         index_of_refraction=3.0,
     )
 

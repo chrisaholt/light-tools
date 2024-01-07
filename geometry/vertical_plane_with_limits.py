@@ -23,8 +23,8 @@ class VerticalPlaneWithLimits(VerticalPlane):
         intersection, is_valid = super().intersect(ray_start, ray_dir)
 
         # Invalidate intersections outside of bounds
-        is_outside_lower = intersection[:, 1] < self._bounds[0]
-        is_outside_upper = intersection[:, 1] > self._bounds[1]
+        is_outside_lower = intersection[:, 0] < self._bounds[0]
+        is_outside_upper = intersection[:, 0] > self._bounds[1]
         is_valid[np.logical_or(is_outside_lower, is_outside_upper)] = False
 
         return intersection, is_valid
