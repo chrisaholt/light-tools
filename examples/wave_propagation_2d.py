@@ -130,23 +130,49 @@ def compute_optical_path_length(start, end):
     # entry_surface = VerticalPlane(0.25)
     # exit_surface = VerticalPlane(0.75)
     index_of_refraction = 1.5
-    optical_volume_1 = OpticalVolume(
+    optical_volume = OpticalVolume(
         entry_surface,
         exit_surface,
-        index_of_refraction=np.inf,
+        index_of_refraction=index_of_refraction,
     )
 
-    optical_volume_2 = OpticalVolume(
-        VerticalPlaneWithLimits(-0.9, bounds=(-0.5, 0.5)),
-        VerticalPlaneWithLimits(-0.75, bounds=(-0.5, 0.5)),
-        index_of_refraction=3.0,
+    # Light blockers
+    blocker_index_of_refraction = np.inf
+    blocker_location = -0.2
+    blocker_width = 0.1
+    bounds_for_upper_blocker = (0.6, np.inf)
+    bounds_for_lower_blocker = (-np.inf, -0.6)
+    blocker_upper = OpticalVolume(
+        VerticalPlaneWithLimits(
+            blocker_location,
+            bounds=bounds_for_upper_blocker,
+        ),
+        VerticalPlaneWithLimits(
+            blocker_location + blocker_width,
+            bounds=bounds_for_upper_blocker,
+        ),
+        index_of_refraction=blocker_index_of_refraction,
+    )
+    blocker_lower = OpticalVolume(
+        VerticalPlaneWithLimits(
+            blocker_location,
+            bounds=bounds_for_lower_blocker,
+        ),
+        VerticalPlaneWithLimits(
+            blocker_location + blocker_width,
+            bounds=bounds_for_lower_blocker,
+        ),
+        index_of_refraction=blocker_index_of_refraction,
     )
 
     distance = np.linalg.norm(end - start)
-    additional_optical_distance = optical_volume_1.additional_optical_distance_to_point(
+    additional_optical_distance = optical_volume.additional_optical_distance_to_point(
         start, end
     )
-    additional_optical_distance += optical_volume_2.additional_optical_distance_to_point(
+    additional_optical_distance += blocker_upper.additional_optical_distance_to_point(
+        start, end
+    )
+    additional_optical_distance += blocker_lower.additional_optical_distance_to_point(
         start, end
     )
     optical_distance_to_point = distance + additional_optical_distance
