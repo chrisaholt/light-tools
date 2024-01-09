@@ -247,6 +247,7 @@ def point_source_over_time_experiment():
         start = waves[0]._emitter.closest_point(diffraction_point)
         optical_distance_to_diffractive_point = compute_optical_path_length(start, diffraction_point)
         diffractive_wave = PointSourceWave(wavelengths[0], center=diffraction_point)
+        diffractive_scale = 0.5
 
         def compute_optical_path_for_diffractive_point(start, end):
             # First verify that propagation is in the +y-direction.
@@ -255,7 +256,7 @@ def point_source_over_time_experiment():
             return optical_distance_to_diffractive_point + compute_optical_path_length(start, end)
         
         all_waves.append(
-            np.array([
+            diffractive_scale * np.array([
                 diffractive_wave.wave_at_point(
                     p,
                     compute_optical_path_for_diffractive_point,
