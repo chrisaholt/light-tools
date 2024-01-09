@@ -134,7 +134,7 @@ def create_lens():
 def create_light_blockers():
     blocker_index_of_refraction = np.inf
     blocker_location = -0.2
-    blocker_width = 0.1
+    blocker_width = 0.5
     bounds_for_upper_blocker = (0.6, np.inf)
     bounds_for_lower_blocker = (-np.inf, -0.6)
     blocker_upper = OpticalVolume(
@@ -233,11 +233,29 @@ def point_source_over_time_experiment():
     total_time = 3 # 2
     t = np.linspace(0, total_time, time_resolution)
 
-    amplitudes = np.stack([
+    all_waves = [
         np.array([
             wave.wave_at_point(p, compute_optical_path_length)(t) for p in points
         ]) for wave in waves
+    ]
+
+    # Diffractive amplitudes
+    diffraction_points = np.array([
+        [-0.59, 0.3] #[-0.6, -0.1], [0.0, 0.0]
     ])
+    for diffraction_point in diffraction_points:
+        start = waves[0]._emitter.closest_point(diffraction_point)
+        optical_distance_to_diffractive_point = compute_optical_path_length(start, diffraction_point)
+        diffractive_wave = PointSourceWave(wavelengths[0], center=diffraction_point)
+        all_waves.append(
+            np.array([
+                diffractive_wave.wave_at_point(
+                    p,
+                    lambda q, r: optical_distance_to_diffractive_point + compute_optical_path_length(q, r),
+                )(t) for p in points
+            ]))
+        
+    amplitudes = np.stack(all_waves)
     amplitudes[np.isnan(amplitudes)] = 0
     combined_amplitudes = np.sum(amplitudes, axis=0)
     combined_amplitudes = combined_amplitudes
