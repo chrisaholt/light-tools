@@ -182,6 +182,33 @@ def compute_optical_path_length(start, end):
     optical_distance_to_point = distance + additional_optical_distance
     return optical_distance_to_point
 
+def create_diffractive_wave_amplitudes_at_points(emitter, wavelength, points, time):
+    diffraction_points = np.array([
+        [-0.59, 0.3],
+        [0.59, 0.3],
+    ])
+    diffraction_amplitudes = []
+    for diffraction_point in diffraction_points:
+        start = emitter.closest_point(diffraction_point)
+        optical_distance_to_diffractive_point = compute_optical_path_length(start, diffraction_point)
+        diffractive_wave = PointSourceWave(wavelength, center=diffraction_point)
+        diffractive_scale = 0.5
+
+        def compute_optical_path_for_diffractive_point(start, end):
+            # First verify that propagation is in the +y-direction.
+            if end[1] < start[1]:
+                return np.nan
+            return optical_distance_to_diffractive_point + compute_optical_path_length(start, end)
+        
+        diffraction_amplitudes.append(
+            diffractive_scale * np.array([
+                diffractive_wave.wave_at_point(
+                    p,
+                    compute_optical_path_for_diffractive_point,
+                )(time) for p in points
+            ]))
+    return diffraction_amplitudes
+
 def save_images_to_video(images, video_filename):
     frame_rate = 10
     _, height, width = images.shape
@@ -207,7 +234,7 @@ def point_source_over_time_experiment():
     #     [0.4, -0.2],
     #     [-0.5, -0.1],
     # ])
-    wavelengths = [0.3]
+    wavelengths = [0.1]
     centers = np.array([
         # [0.0, 0.0],
         [0.0, -0.2],
@@ -233,37 +260,18 @@ def point_source_over_time_experiment():
     total_time = 3 # 2
     t = np.linspace(0, total_time, time_resolution)
 
-    all_waves = [
+    all_amplitudes = [
         np.array([
             wave.wave_at_point(p, compute_optical_path_length)(t) for p in points
         ]) for wave in waves
     ]
 
     # Diffractive amplitudes
-    diffraction_points = np.array([
-        [-0.59, 0.3] #[-0.6, -0.1], [0.0, 0.0]
-    ])
-    for diffraction_point in diffraction_points:
-        start = waves[0]._emitter.closest_point(diffraction_point)
-        optical_distance_to_diffractive_point = compute_optical_path_length(start, diffraction_point)
-        diffractive_wave = PointSourceWave(wavelengths[0], center=diffraction_point)
-        diffractive_scale = 0.5
-
-        def compute_optical_path_for_diffractive_point(start, end):
-            # First verify that propagation is in the +y-direction.
-            if end[1] < start[1]:
-                return np.nan
-            return optical_distance_to_diffractive_point + compute_optical_path_length(start, end)
+    diffraction_amplitudes = create_diffractive_wave_amplitudes_at_points(
+        plane_wave_emitters[0], wavelengths[0], points, t
+    )
         
-        all_waves.append(
-            diffractive_scale * np.array([
-                diffractive_wave.wave_at_point(
-                    p,
-                    compute_optical_path_for_diffractive_point,
-                )(t) for p in points
-            ]))
-        
-    amplitudes = np.stack(all_waves)
+    amplitudes = np.stack(all_amplitudes + diffraction_amplitudes)
     amplitudes[np.isnan(amplitudes)] = 0
     combined_amplitudes = np.sum(amplitudes, axis=0)
     combined_amplitudes = combined_amplitudes
