@@ -41,3 +41,11 @@ class Surface:
         Computes the closest point on the surface to the given point.
         """
         raise NotImplementedError()
+    
+    def is_inside(self,
+        points: np.array,
+    ):
+        """Returns a boolean mask of points which are inside the Surface."""
+        raise NotImplementedError()
+        # is_inside = np.full_like(points, False)
+        # return is_inside

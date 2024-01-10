@@ -78,3 +78,10 @@ class SphericalSurface(Surface):
         is_valid = is_valid & (cos_angle_from_center >= self._cos_max_angle_from_apex)
 
         return intersection_points, is_valid
+
+    def is_inside(self,
+        points: np.array,
+    ):
+        vector_from_center = points - self._center
+        distance_from_center = np.linalg.norm(vector_from_center, axis=-1)
+        return distance_from_center <= self._radius

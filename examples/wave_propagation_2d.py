@@ -177,11 +177,15 @@ def point_source_over_time_experiment():
     diffraction_amplitudes = create_diffractive_wave_amplitudes_at_points(
         plane_wave_emitters[0], wavelengths[0], points, t
     )
-        
+    
     amplitudes = np.stack(all_amplitudes + diffraction_amplitudes)
     amplitudes[np.isnan(amplitudes)] = 0
     combined_amplitudes = np.sum(amplitudes, axis=0)
     combined_amplitudes = combined_amplitudes
+
+    lens = create_lens()
+    is_inside_lens = lens.is_inside(points) 
+    combined_amplitudes[is_inside_lens] += 0.5
 
     images = combined_amplitudes.reshape([len(x), len(y), -1]) ** 2
     images = images.transpose([2, 0, 1])

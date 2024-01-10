@@ -94,3 +94,12 @@ class OpticalVolume:
         additional_optical_distance[additional_optical_distance > 0] *= (self._index_of_refraction - 1)
 
         return additional_optical_distance
+    
+    def is_inside(self,
+        points: np.array,
+    ):
+        """Returns a boolean mask of points which are inside the volume."""
+        return np.logical_and(
+            self._entry_surface.is_inside(points),
+            self._exit_surface.is_inside(points),
+        )
