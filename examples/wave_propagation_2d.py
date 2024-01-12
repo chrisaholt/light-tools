@@ -117,15 +117,16 @@ def create_diffractive_wave_amplitudes_at_points(emitter, wavelength, points, ti
     return diffraction_amplitudes
 
 def save_images_to_video(images, video_filename):
+    print(f"***Saving video to {video_filename}...")
     frame_rate = 10
-    _, height, width = images.shape
+    _, height, width, _ = images.shape
     forcc = cv2.VideoWriter_fourcc(*'mp4v')
     writer = cv2.VideoWriter(
         video_filename,
         forcc,
         frame_rate,
         (width, height),
-        isColor=False,
+        isColor=True,
         )
 
     # Write the images to the video writer
@@ -183,12 +184,21 @@ def point_source_over_time_experiment():
     combined_amplitudes = np.sum(amplitudes, axis=0)
     combined_amplitudes = combined_amplitudes
 
+    # Add color and intensities to images.
+    intensities = combined_amplitudes.reshape([len(x), len(y), -1]) ** 2
+    intensities = intensities.transpose([2, 0, 1])
+
+    # Add a channel for 3 colors (BGR)
+    BLUE, GREEN, RED = 0, 1, 2
+    images = np.zeros(intensities.shape + (3,))
+    images[:, : , :, RED] = intensities
+
+    # Add color for the lens.
     lens = create_lens()
     is_inside_lens = lens.is_inside(points) 
-    combined_amplitudes[is_inside_lens] += 0.5
-
-    images = combined_amplitudes.reshape([len(x), len(y), -1]) ** 2
-    images = images.transpose([2, 0, 1])
+    is_inside_lens = is_inside_lens.reshape((grid_size, grid_size))
+    images[:, is_inside_lens, BLUE] = 0.3
+    images[:, is_inside_lens, GREEN] = 0.3
 
     # Create a video writer
     video_filename = os.path.expanduser(r"~/OneDrive/Desktop/waves.mp4")
