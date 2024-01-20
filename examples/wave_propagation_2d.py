@@ -41,7 +41,7 @@ def create_lens():
 def create_light_blockers():
     blocker_index_of_refraction = np.inf
     blocker_location = -0.2
-    blocker_width = 0.5
+    blocker_width = 0.3
     bounds_for_upper_blocker = (0.6, np.inf)
     bounds_for_lower_blocker = (-np.inf, -0.6)
     blocker_upper = OpticalVolume(
@@ -95,8 +95,8 @@ def compute_optical_path_length(start, end):
 
 def create_diffractive_wave_amplitudes_at_points(emitter, wavelength, points, time):
     diffraction_points = np.array([
-        [-0.59, 0.3],
-        [0.59, 0.3],
+        [-0.59, 0.1],
+        [0.59, 0.1],
     ])
     diffraction_amplitudes = []
     for diffraction_point in diffraction_points:
@@ -203,6 +203,13 @@ def point_source_over_time_experiment():
     is_inside_lens = is_inside_lens.reshape((grid_size, grid_size))
     images[:, is_inside_lens, BLUE] = 0.3
     images[:, is_inside_lens, GREEN] = 0.3
+
+    # Add color for the blockers.
+    light_blockers = create_light_blockers()
+    for blocker in light_blockers:
+        is_inside = blocker.is_inside(points) 
+        is_inside = is_inside.reshape((grid_size, grid_size))
+        images[:, is_inside, :] = 0.7
 
     # Create a video writer
     video_filename = os.path.expanduser(r"~/OneDrive/Desktop/waves.mp4")
