@@ -39,4 +39,4 @@ class VerticalPlaneWithLimits(VerticalPlane):
         return np.logical_and(
             super().is_inside(point),
             is_within_bounds,
-        ) #(-np.inf, -0.6)
+        )
