@@ -140,6 +140,14 @@ def save_images_to_video(images, video_filename):
     # Close the video writer
     writer.release()
 
+def compute_intensity_on_plane(
+    intensities: np.array,
+):
+    print(intensities.shape)
+    intensities_on_image_plane = intensities[:, :, -1]
+    fig = px.imshow(intensities_on_image_plane)
+    fig.show()
+
 def point_source_over_time_experiment():
     # wavelengths = [0.3, 0.3]
     # centers = np.array([
@@ -163,7 +171,7 @@ def point_source_over_time_experiment():
         for wavelength, emitter in zip(wavelengths, plane_wave_emitters)
     ]
 
-    grid_size = 150 # 10, 200
+    grid_size = 50 # 10, 200
     x = np.linspace(-1, 1, grid_size)
     y = np.linspace(-1, 1, grid_size)
     points = np.array(list(itertools.product(x, y)))
@@ -179,9 +187,10 @@ def point_source_over_time_experiment():
     ]
 
     # Diffractive amplitudes
-    diffraction_amplitudes = create_diffractive_wave_amplitudes_at_points(
-        plane_wave_emitters[0], wavelengths[0], points, t
-    )
+    # diffraction_amplitudes = create_diffractive_wave_amplitudes_at_points(
+    #     plane_wave_emitters[0], wavelengths[0], points, t
+    # )
+    diffraction_amplitudes = []
     
     amplitudes = np.stack(all_amplitudes + diffraction_amplitudes)
     amplitudes[np.isnan(amplitudes)] = 0
@@ -210,6 +219,9 @@ def point_source_over_time_experiment():
         is_inside = blocker.is_inside(points) 
         is_inside = is_inside.reshape((grid_size, grid_size))
         images[:, is_inside, :] = 0.7
+
+    # Compute intensity at image plane
+    compute_intensity_on_plane(intensities)
 
     # Create a video writer
     video_filename = os.path.expanduser(r"~/OneDrive/Desktop/waves.mp4")
