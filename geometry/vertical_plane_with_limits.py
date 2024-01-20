@@ -8,8 +8,8 @@ class VerticalPlaneWithLimits(VerticalPlane):
     Represents a vertical plane y=constant,
     defined within x in bounds=(x_min, x_max).
     """
-    def __init__(self, constant, bounds):
-        super().__init__(constant)
+    def __init__(self, constant, normal_sign, bounds):
+        super().__init__(constant, normal_sign)
 
         if (len(bounds) != 2) or (bounds[0] >= bounds[1]):
             raise ValueError("Bounds should be a tuple of shape (x_min, x_max), where x_min < x_max.")
@@ -28,3 +28,15 @@ class VerticalPlaneWithLimits(VerticalPlane):
         is_valid[np.logical_or(is_outside_lower, is_outside_upper)] = False
 
         return intersection, is_valid
+    
+    def is_inside(self,
+        point: np.array
+    ):
+        is_within_bounds = np.logical_and(
+            point[:, 0] >= self._bounds[0],
+            point[:, 0] <= self._bounds[1],
+        )
+        return np.logical_and(
+            super().is_inside(point),
+            is_within_bounds,
+        ) #(-np.inf, -0.6)

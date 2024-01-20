@@ -77,12 +77,12 @@ class OpticalVolume:
         distance_within_surface = np.zeros(num_points)
 
         # Point is within surface (2)
-        is_within_surface = ~is_before_surface and is_entry_valid and is_exit_valid
+        is_within_surface = self.is_inside(point)
         distances_to_entry = np.linalg.norm(point - intersections_light_to_entry, axis=-1)
         distance_within_surface[is_within_surface] = distances_to_entry[is_within_surface]
 
         # Point is after surface (3)
-        is_after_surface = is_entry_valid and ~is_exit_valid
+        is_after_surface = is_entry_valid and ~is_within_surface and ~is_before_surface
         distances_exit_to_entry = np.linalg.norm(
             intersections_exit_from_entry - intersections_light_to_entry, axis=-1
         )
@@ -94,7 +94,7 @@ class OpticalVolume:
         additional_optical_distance[additional_optical_distance > 0] *= (self._index_of_refraction - 1)
 
         return additional_optical_distance
-    
+
     def is_inside(self,
         points: np.array,
     ):

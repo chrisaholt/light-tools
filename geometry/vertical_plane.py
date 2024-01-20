@@ -6,8 +6,9 @@ class VerticalPlane(Surface):
     """
     Represents a vertical plane y=constant.
     """
-    def __init__(self, constant):
+    def __init__(self, constant, normal_sign):
         self._constant = constant
+        self._normal_sign = normal_sign
 
     def intersect(self,
         ray_start: np.array,
@@ -51,3 +52,11 @@ class VerticalPlane(Surface):
         if len(point.shape) == 1:
             point = expand_shape(point)
         return point[:, 1] < self._constant
+
+    def is_inside(self,
+        point: np.array,
+    ):
+        if self._normal_sign < 0:
+            return point[:, 1]  >= self._constant
+        else:
+            return point[:, 1] <= self._constant

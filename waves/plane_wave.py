@@ -13,7 +13,7 @@ class PlaneWave(Wave):
     """
     def __init__(self,
         wavelength: float,
-        emitter: VerticalPlane = VerticalPlane(0),
+        emitter: VerticalPlane = VerticalPlane(0, 1),
         phase: float = 0,
     ):
         super().__init__(wavelength, phase)

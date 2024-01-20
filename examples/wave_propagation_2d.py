@@ -22,13 +22,13 @@ def create_lens():
         center=np.array([0, 0.25]),
         radius=0.75,
         is_convex=True,
-        distance_from_apex=0.3,
+        distance_from_apex=0.4,
     )
     exit_surface = SphericalSurface(
         center=np.array([0, -0.75]),
         radius=1.0,
         is_convex=False,
-        distance_from_apex=0.3,
+        distance_from_apex=0.4,
     )
     index_of_refraction = 1.5
     lens = OpticalVolume(
@@ -47,10 +47,12 @@ def create_light_blockers():
     blocker_upper = OpticalVolume(
         VerticalPlaneWithLimits(
             blocker_location,
+            -1,
             bounds=bounds_for_upper_blocker,
         ),
         VerticalPlaneWithLimits(
             blocker_location + blocker_width,
+            1,
             bounds=bounds_for_upper_blocker,
         ),
         index_of_refraction=blocker_index_of_refraction,
@@ -58,10 +60,12 @@ def create_light_blockers():
     blocker_lower = OpticalVolume(
         VerticalPlaneWithLimits(
             blocker_location,
+            -1,
             bounds=bounds_for_lower_blocker,
         ),
         VerticalPlaneWithLimits(
             blocker_location + blocker_width,
+            1,
             bounds=bounds_for_lower_blocker,
         ),
         index_of_refraction=blocker_index_of_refraction,
@@ -148,7 +152,7 @@ def point_source_over_time_experiment():
         [0.0, -0.2],
     ])
     plane_wave_emitters = [
-        VerticalPlane(-1.0),
+        VerticalPlane(-1.0, 1),
     ]
     # waves = [
     #     PointSourceWave(wavelength, center=center)
@@ -159,7 +163,7 @@ def point_source_over_time_experiment():
         for wavelength, emitter in zip(wavelengths, plane_wave_emitters)
     ]
 
-    grid_size = 200 # 10, 200
+    grid_size = 150 # 10, 200
     x = np.linspace(-1, 1, grid_size)
     y = np.linspace(-1, 1, grid_size)
     points = np.array(list(itertools.product(x, y)))
