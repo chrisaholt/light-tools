@@ -145,7 +145,16 @@ def compute_intensity_on_plane(
 ):
     print(intensities.shape)
     intensities_on_image_plane = intensities[:, :, -1]
-    fig = px.imshow(intensities_on_image_plane)
+    # fig = px.imshow(intensities_on_image_plane)
+    # fig.show()
+
+    intensities_integral = np.sum(intensities_on_image_plane, axis=0)
+    scatter = go.Scatter(
+        y=intensities_integral,
+        mode="lines+markers",
+        name="intensities",
+    )
+    fig = go.Figure(data=[scatter])
     fig.show()
 
 def point_source_over_time_experiment():
