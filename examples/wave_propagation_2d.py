@@ -143,7 +143,6 @@ def save_images_to_video(images, video_filename):
 def compute_intensity_on_plane(
     intensities: np.array,
 ):
-    print(intensities.shape)
     intensities_on_image_plane = intensities[:, :, -1]
     # fig = px.imshow(intensities_on_image_plane)
     # fig.show()
