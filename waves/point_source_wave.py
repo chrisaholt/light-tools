@@ -25,3 +25,6 @@ class PointSourceWave(Wave):
                 self.field_at_time(t-optical_distance_to_point)
 
         return wave_func
+    
+    def computed_wave_at_point(self, p, compute_optical_path_length, time):
+        return self.wave_at_point(p, compute_optical_path_length)(time)

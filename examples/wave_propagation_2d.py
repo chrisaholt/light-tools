@@ -1,6 +1,7 @@
 # Example of waves propagating in 2D.
 
 import cv2
+import functools
 import itertools
 import numpy as np
 import os
@@ -9,6 +10,8 @@ import plotly.graph_objects as go
 
 import sys
 sys.path.append("..")
+
+from multiprocessing import Pool
 
 from geometry.spherical_surface import SphericalSurface
 from geometry.vertical_plane import VerticalPlane
@@ -189,11 +192,21 @@ def point_source_over_time_experiment():
     total_time = 3 # 2
     t = np.linspace(0, total_time, time_resolution)
 
-    all_amplitudes = [
-        np.array([
-            wave.wave_at_point(p, compute_optical_path_length)(t) for p in points
-        ]) for wave in waves
-    ]
+    # Compute wave amplitudes, iterating using multiprocessing for speed
+    all_amplitudes = []
+    for wave in waves:
+       # Create wave function that can be used for multiprocessing.
+       wave_func = functools.partial(
+           wave.computed_wave_at_point,
+           compute_optical_path_length=compute_optical_path_length,
+           time=t,
+        )
+       with Pool() as pool:
+            wave_amplitudes = pool.map(
+                wave_func,
+                points,
+            )
+            all_amplitudes.append(np.array(wave_amplitudes))
 
     # Diffractive amplitudes
     # diffraction_amplitudes = create_diffractive_wave_amplitudes_at_points(
