@@ -19,14 +19,14 @@ from waves.point_source_wave import PointSourceWave
 
 def create_lens():
     entry_surface = SphericalSurface(
-        center=np.array([0, 0.25]),
-        radius=0.75,
+        center=np.array([0, 1.75]),
+        radius=2.0,
         is_convex=True,
         distance_from_apex=0.4,
     )
     exit_surface = SphericalSurface(
-        center=np.array([0, -0.75]),
-        radius=1.0,
+        center=np.array([0, -1.75]),
+        radius=2.0,
         is_convex=False,
         distance_from_apex=0.4,
     )
@@ -40,10 +40,10 @@ def create_lens():
 
 def create_light_blockers():
     blocker_index_of_refraction = np.inf
-    blocker_location = -0.2
+    blocker_location = -0.15
     blocker_width = 0.3
-    bounds_for_upper_blocker = (0.6, np.inf)
-    bounds_for_lower_blocker = (-np.inf, -0.6)
+    bounds_for_upper_blocker = (0.7, np.inf)
+    bounds_for_lower_blocker = (-np.inf, -0.7)
     blocker_upper = OpticalVolume(
         VerticalPlaneWithLimits(
             blocker_location,
@@ -157,29 +157,30 @@ def compute_intensity_on_plane(
     fig.show()
 
 def point_source_over_time_experiment():
-    # wavelengths = [0.3, 0.3]
-    # centers = np.array([
-    #     [0.4, -0.2],
-    #     [-0.5, -0.1],
-    # ])
-    wavelengths = [0.1]
+    wavelengths = [0.1, 0.1]
     centers = np.array([
-        # [0.0, 0.0],
-        [0.0, -0.2],
+        [0.9, -0.9],
+        [-0.9, -0.9],
     ])
-    plane_wave_emitters = [
-        VerticalPlane(-1.0, 1),
-    ]
-    # waves = [
-    #     PointSourceWave(wavelength, center=center)
-    #     for wavelength, center in zip(wavelengths, centers)
-    # ]
-    waves = [
-        PlaneWave(wavelength, emitter=emitter)
-        for wavelength, emitter in zip(wavelengths, plane_wave_emitters)
-    ]
+    # wavelengths = [0.1]
+    # centers = np.array([
+    #     # [0.0, 0.0],
+    #     [0.0, -0.2],
+    # ])
 
-    grid_size = 50 # 10, 200
+    waves = [
+        PointSourceWave(wavelength, center=center)
+        for wavelength, center in zip(wavelengths, centers)
+    ]
+    # plane_wave_emitters = [
+    #     VerticalPlane(-1.0, 1),
+    # ]
+    # waves = [
+    #     PlaneWave(wavelength, emitter=emitter)
+    #     for wavelength, emitter in zip(wavelengths, plane_wave_emitters)
+    # ]
+
+    grid_size = 200 # 10, 200
     x = np.linspace(-1, 1, grid_size)
     y = np.linspace(-1, 1, grid_size)
     points = np.array(list(itertools.product(x, y)))
