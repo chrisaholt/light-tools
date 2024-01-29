@@ -49,6 +49,7 @@ class SphericalSurface(Surface):
 
         # Find intersections where the discriminant is non-negative
         hits = discriminant >= 0
+        discriminant[~hits] = np.nan
 
         # Compute the two solutions of the quadratic equation
         t0 = (-b - np.sqrt(discriminant)) / (2 * a)
